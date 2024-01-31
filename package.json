@@ -1,0 +1,41 @@
+{
+	"name": "uber43_bot",
+	"version": "1.0.0",
+	"main": "src/index.js",
+	"license": "MIT",
+	"private": true,
+	"type": "commonjs",
+	"scripts": {
+		"start": "node dist/app.js",
+		"dev": "nodemon",
+		"lint": "eslint ./src/**",
+		"lint:fix": "eslint ./src/** --fix"
+	},
+	"dependencies": {
+		"@types/generate-password": "^1.5.1",
+		"body-parser": "^1.20.2",
+		"cron": "^3.1.6",
+		"dotenv": "^16.4.1",
+		"fetch": "^1.1.0",
+		"fs-extra": "^11.2.0",
+		"generate-password": "^1.7.1",
+		"node": "^21.6.1",
+		"pg": "^8.11.3",
+		"pg-hstore": "^2.3.4",
+		"sequelize": "^6.35.2",
+		"telegraf": "^4.15.3",
+		"tslog": "^4.9.2"
+	},
+	"devDependencies": {
+		"@telegraf/types": "^6.9.1",
+		"@typescript-eslint/eslint-plugin": "^6.20.0",
+		"@typescript-eslint/parser": "^6.20.0",
+		"eslint": "^8.56.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-prettier": "^5.1.3",
+		"nodemon": "^3.0.3",
+		"prettier": "^3.2.4",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.3.3"
+	}
+}
