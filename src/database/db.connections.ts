@@ -1,9 +1,8 @@
-import { Sequelize, Dialect } from 'sequelize';
-import { IDb } from './db.interface';
+import { Sequelize, Dialect } from '@sequelize/core';
 import { IConfigService, ConfigService } from '../config';
-import { user, channel, battle, user_battle } from './models';
+import { User, Battle } from './models';
 
-export class Db implements IDb {
+export class Db {
 	sequelize: Sequelize;
 	private static instance: Db | null = null;
 
@@ -22,31 +21,18 @@ export class Db implements IDb {
 			const dialect: Dialect = configService.get('POSTGRES_DIALECT') as Dialect;
 			const logging: boolean | ((sql: string, timing?: number) => void) = false;
 
+
+			// const sequelize: Sequelize = new Sequelize(`postgres://${username}:${password}:${port}/${database}`)
 			const sequelize: Sequelize = new Sequelize(database, username, password, {
 				host,
 				port,
 				dialect,
 				logging,
+				models: [User, Battle],
 			});
-			const UserModel = user(sequelize);
-			const BattleModel = battle(sequelize);
-			const ChannelModel = channel(sequelize);
-			const UserBattleModel = user_battle(sequelize);
-
-			UserModel.hasMany(BattleModel);
-			BattleModel.belongsTo(UserModel);
-
-			BattleModel.hasMany(UserModel);
-			UserModel.belongsTo(BattleModel);
-
-			BattleModel.belongsToMany(UserModel, { through: UserBattleModel });
-			UserModel.belongsToMany(BattleModel, { through: UserBattleModel });
-
 			await sequelize.sync({ alter: true });
-
 			this.instance = new Db(sequelize);
 		}
-
 		return this.instance;
 	}
 }

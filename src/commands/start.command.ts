@@ -1,4 +1,4 @@
-import { BattlesMenu, MainMenu } from '../utils/markup';
+import { BattlesMenu, MainAdminMenu } from '../utils/markup';
 import { TGCommand } from './command.class';
 import { UserService, BattleService } from '../services';
 import { IDb } from '../database';
@@ -13,7 +13,7 @@ export class StartCommand extends TGCommand {
 		super(bot);
 		this.userService = new UserService(db);
 		this.battleService = new BattleService(db);
-		this.menuButtons = new MainMenu().markup;
+		this.menuButtons = new MainAdminMenu().markup;
 	}
 
 	// private getUserName(user: { username?: string; firstName: string }): string {

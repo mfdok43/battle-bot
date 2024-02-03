@@ -1,53 +1,66 @@
 import { IDb } from '../database';
-import { ModelStatic } from 'sequelize';
+import { Battle, BattleStatus } from '../database/models/battle.model';
+import { sql } from '@sequelize/core';
+import { SqlUuidV4 } from '@sequelize/core/types/expression-builders/uuid';
+import { SavePassword } from '../middleware';
+import { UserRole } from '../database/models/user.model';
 
 export class BattleService {
 	private battle: any;
 	constructor(db: IDb) {
-		this.battle = db.sequelize.models.battle;
+		this.battle = Battle;
 	}
 
-	async create(name: string): Promise<any> {
+	async create(name: string, playerOne: string, playerTwo: string): Promise<any> {
+		const _battleId: SqlUuidV4 = sql.uuidV4;
+
+		const battleData = {
+			battleId: _battleId,
+			name: name,
+			status: BattleStatus.Planned,
+			playerOne: playerOne,
+			playerTwo: playerTwo,
+		};
+
 		const [battle, created] = await this.battle.findOrCreate({
-			where: { name: name },
+			where: { battleId: _battleId },
+			defaults: battleData,
 		});
+
+		console.log('battle created', battle);
 		return battle;
 	}
 
 	async findAll(): Promise<any> {
-		const battles = await this.battle.findAll({ raw: true });
+		const [battles] = await Promise.all([this.battle.findAll({ raw: true })]);
 		return battles;
 	}
 
-	// async addUserToBattle(login: string, battleId: string): Promise<any> {
-	// 	const [user, created] = await this.user.findOrCreate({
-	// 		where: { login: login, battleId: battleId },
-	// 	});
-	// 	return user;
-	// }
-	//
-	// async updateRole(login: string, role: string): Promise<any> {
-	// 	const user = await this.user.update(
-	// 		{ role: role },
-	// 		{
-	// 			where: {
-	// 				login: login,
-	// 			},
-	// 		},
-	// 	);
-	// 	console.log('update role ' + user);
-	// 	return user;
-	// }
-	// async delete(login: string): Promise<any> {
-	// 	return this.user.destroy({
-	// 		where: {
-	// 			login: login,
-	// 		},
-	// 	});
-	// }
-	//
-	// async getById(login: string): Promise<any> {
-	// 	const user = await this.user.findOne({ where: { login: login } });
-	// 	return user;
-	// }
+	async getPlannedBattles(): Promise<any> {
+		const [battles] = await Promise.all([
+			this.battle.findAll({
+				where: {
+					status: 'planned',
+				},
+			}),
+		]);
+		return battles;
+	}
+
+	async getById(id: string): Promise<any> {
+		return await this.battle.findOne({ where: { battleId: id } });
+	}
+
+	async updateStatus(id: string, status: string): Promise<any> {
+		const battle = await this.battle.update(
+			{ status: status },
+			{
+				where: {
+					battleId: id.toString(),
+				},
+			},
+		);
+		console.log('update status ' + battle);
+		return battle;
+	}
 }

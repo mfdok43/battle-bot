@@ -1,11 +1,9 @@
 import { TGCommand } from './command.class';
-import { MainMenu } from '../utils/markup';
 
 export class BackButtonCommand extends TGCommand {
 	menuButtons: any;
 	constructor(bot: any) {
 		super(bot);
-		this.menuButtons = new MainMenu().markup;
 	}
 
 	init(): void {

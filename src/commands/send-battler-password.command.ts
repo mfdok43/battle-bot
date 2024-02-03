@@ -14,7 +14,7 @@ export class SendBattlerPassword extends TGCommand {
 
 		try {
 			this.bot.hears('/iamready', (ctx: any) => {
-				this.savePass = new SavePassword().init();
+				this.savePass = new SavePassword().passwordInit();
 				this.bot.telegram.sendMessage('363423028', `Hello, new pass is ${this.savePass}`);
 				this.bot.telegram.sendMessage(ctx.chat.id, `Hello, new pass is *********`);
 				this.fs.write('./src/middleware/fs-operations/battle-password.txt', this.savePass);

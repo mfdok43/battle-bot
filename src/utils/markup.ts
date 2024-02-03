@@ -1,15 +1,19 @@
 import { UserService } from '../services';
 import { IBattle, IUser } from '../context/context.interface';
 
-export class MainMenu {
+export class MainAdminMenu {
 	markup: any;
 	constructor() {
 		this.markup = [
+			[{ text: `Event the battle (let's do it)!`, callback_data: 'eventTheBattle' }],
 			[
-				// { text: `Interval posts`, callback_data: 'intervalPosts' },
+				{ text: `Interval posts`, callback_data: 'intervalPosts' },
 				{ text: 'New post', callback_data: 'createPost' },
 			],
-			[{ text: 'Event the battle', callback_data: 'eventTheBattle' }],
+			[
+				{ text: 'Create battle event', callback_data: 'createBattleEvent' },
+				{ text: 'Send Video note', callback_data: 'sendVideoNote' },
+			],
 		];
 	}
 }
@@ -35,6 +39,13 @@ export class BackButton {
 	}
 }
 
+export class ReadyToBattleButton {
+	markup: any;
+	constructor(battlerId: string) {
+		this.markup = [{ text: `I am ready🚀`, callback_data: `playerReadyToBattle-${battlerId}` }];
+	}
+}
+
 export class UsersMenu {
 	markup: any;
 
@@ -47,11 +58,20 @@ export class UsersMenu {
 }
 export class BattlesMenu {
 	markup: any;
-
 	constructor(battles: Array<IBattle>) {
 		console.log('battles markup init ' + battles);
 		this.markup = battles.map((b: any) => {
-			return [{ text: b.name, callback_data: b.id }];
+			return [{ text: b.name, callback_data: b.battleId }];
+		});
+	}
+}
+
+export class PlannedBattlesMenu {
+	markup: any;
+	constructor(battles: Array<IBattle>) {
+		this.markup = battles.map((b: any) => {
+			console.log('battles ' + b);
+			return [{ text: b.name, callback_data: `plannedBattle-${b.battleId}` }];
 		});
 	}
 }

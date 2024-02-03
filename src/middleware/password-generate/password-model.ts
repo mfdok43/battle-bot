@@ -1,5 +1,5 @@
-import generator from 'generate-password';
-import { FsOperations } from '../../middleware/fs-operations/fs-operations';
+import generator from 'generate-password-ts';
+import { FsOperations } from '../fs-operations/fs-operations';
 
 export class SavePassword {
 	private generatePassword: any;
@@ -10,10 +10,18 @@ export class SavePassword {
 		this.generatePassword = generator;
 	}
 
-	init(): void {
+	passwordInit(): string {
 		return this.generatePassword.generate({
 			length: 10,
 			numbers: true,
+		});
+	}
+
+	bigIntPasswordInit(): string {
+		return this.generatePassword.generate({
+			length: 10,
+			numbers: true,
+			symbols: false,
 		});
 	}
 }

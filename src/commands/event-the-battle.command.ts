@@ -1,98 +1,167 @@
-import { BackButton, BattlesMenu, CreateBattleButton, UsersMenu } from '../utils/markup';
 import { TGCommand } from './command.class';
 import { Scenes } from 'telegraf';
+import { BackButton, BattlesMenu, PlannedBattlesMenu, ReadyToBattleButton } from '../utils/markup';
+import { Battle } from '../database/models';
+import { BattleService, UserService } from '../services';
 import { Db } from '../database';
-import { UserBattleService, UserService, BattleService } from '../services';
-// import { GetBattles } from '../../common/sequelize/battle-model.sequelize';
 
 export class EventTheBattleScene extends TGCommand {
 	scene: any;
 	backButton: any;
-	battleButtons: any;
-	createBattleButton: any;
-	replyMarkup: any;
-	userService: any;
+	plannedBattlesMarkup: any;
 	battleService: any;
-	userBattleService: any;
+	userService: any;
+	_session: any;
 	constructor(bot: any) {
 		super(bot);
 		this.scene = new Scenes.BaseScene('eventTheBattle');
 	}
 
 	init(): void {
-		console.log(`scene 3 init`);
-
-		const replyTextSample = (isName: string, isBattler1: string, isBattler2: string): string => {
-			return `Create battle scene. Commands don't work!. 
-			\nBattle settings: name(!)${isName} battler1${isBattler1} battler2${isBattler2}`;
+		const replyTextSample = (name: string, playerOne: string, playerTwo: string): string => {
+			return `Battle "${name}" is going! Players can send rounds🚀
+			 \nPlayerOne🥷: ${playerOne} 
+			 \nPlayerTwo🥷: ${playerTwo}`;
 		};
 
 		this.scene.enter(async (ctx: any) => {
-			console.log(`battle scene enter`);
-
-			const db = await Db.getDb();
-			this.userService = new UserService(db);
-			const users = await this.userService.getUsers();
-
-			this.battleButtons = await new UsersMenu(users).markup;
-			this.createBattleButton = await new CreateBattleButton().markup;
-			this.backButton = await new BackButton().markup;
-			const session = ctx.scene.session;
-			session.isname = `❌`;
-			session.isbattler1 = `❌`;
-			session.isbattler2 = `❌`;
-
-			session.replyText = replyTextSample(session.isname, session.isbattler1, session.isbattler2);
-
-			this.replyMarkup = {
-				reply_markup: {
-					inline_keyboard: [...this.battleButtons, this.createBattleButton, this.backButton],
-				},
-			};
-
-			await ctx.replyWithHTML(session.replyText, this.replyMarkup);
-		});
-
-		this.scene.action(/battlerName-/, (ctx: any) => {
-			const session = ctx.scene.session;
-			try {
-				const _value = ctx.match.input.replace('battlerName-', '');
-
-				if (session.isbattler1 == `❌`) {
-					session.isbattler1 = `✔️`;
-					session.battler1 = _value;
-				} else {
-					session.isbattler2 = `✔️`;
-					session.battler2 = _value;
-				}
-				session.replyText = replyTextSample(session.isname, session.isbattler1, session.isbattler2);
-				ctx.replyWithHTML(session.replyText, this.replyMarkup);
-
-				console.log('battler ' + session.battler1, session.battler2);
-			} catch (e) {
-				console.log(e);
-			}
-		});
-
-		this.scene.on('message', async (ctx: any) => {
-			const session = ctx.scene.session;
-			session.battleName = ctx.message.text;
-			session.isname = `✔️`;
-			session.replyText = replyTextSample(session.isname, session.isbattler1, session.isbattler2);
-			await ctx.replyWithHTML(session.replyText, this.replyMarkup);
-			console.log(ctx.message.text, ctx.scene.session.battleName, 'set battle name');
-		});
-
-		this.scene.action('createBattle', async (ctx: any) => {
 			const session = ctx.scene.session;
 			const db = await Db.getDb();
 			this.battleService = new BattleService(db);
-			this.userBattleService = new UserBattleService(db);
-			const _newBattle = await this.battleService.create(session.battleName);
-			console.log('new battle ' + _newBattle);
-			await this.userBattleService.create(session.battler1, _newBattle.id);
-			await this.userBattleService.create(session.battler2, _newBattle.id);
+			this.userService = new UserService(db);
+			const plannedBattles = await this.battleService.getPlannedBattles();
+			this.plannedBattlesMarkup = new PlannedBattlesMenu(plannedBattles).markup;
+			this.backButton = await new BackButton().markup;
+
+			await ctx.replyWithHTML('Select the battle', {
+				reply_markup: {
+					inline_keyboard: [...this.plannedBattlesMarkup, this.backButton],
+				},
+			});
 		});
+
+		this.scene.action(/plannedBattle-/, async (ctx: any) => {
+			this._session = ctx.scene.session;
+			const session = ctx.scene.session;
+			session.battleId = ctx.match.input.replace('plannedBattle-', '');
+			await this.battleService.updateStatus(session.battleId, 'going');
+			const battle = await this.battleService.getById(session.battleId);
+			session.battleName = battle.name;
+			session.playerOneId = battle.playerOne;
+			session.playerTwoId = battle.playerTwo;
+			session.playerOne = await this.userService.getById(session.playerOneId);
+			session.playerTwo = await this.userService.getById(session.playerTwoId);
+			session.playerOneRounds = ['❌', '❌', '❌'];
+			session.playerTwoRounds = ['❌', '❌', '❌'];
+			session.playerOneReady = false;
+			session.playerTwoReady = false;
+
+			session.playerDetails = (player: any, rounds: []): string => {
+				let _str: string = `${player.firstName} ${player.username}`;
+				rounds.forEach((round: any, index: number) => {
+					if (index == 0) {
+						_str += `\nRound 1️⃣ - ${round}`;
+					}
+
+					if (index == 1) {
+						_str += `\nRound 2️⃣ - ${round}`;
+					}
+
+					if (index == 2) {
+						_str += `\nRound 3️⃣ - ${round}`;
+					}
+				});
+				return _str;
+			};
+			console.log('plannedBattle', session.playerOneId, session.playerTwoId);
+
+			this.bot.telegram.sendMessage(
+				session.playerOneId,
+				`Battle ${session.battleName} has started! Are you ready?`,
+				{
+					reply_markup: {
+						inline_keyboard: [await new ReadyToBattleButton(session.playerOneId).markup],
+					},
+				},
+			);
+			this.bot.telegram.sendMessage(
+				session.playerTwoId,
+				`Battle ${session.battleName} has started! Are you ready?`,
+				{
+					reply_markup: {
+						inline_keyboard: [await new ReadyToBattleButton(session.playerTwoId).markup],
+					},
+				},
+			);
+			ctx.reply(
+				replyTextSample(
+					session.battleName,
+					session.playerDetails(session.playerOne, session.playerOneRounds),
+					session.playerDetails(session.playerTwo, session.playerTwoRounds),
+				),
+			);
+		});
+
+		this.bot.action(/playerReadyToBattle-/, async (ctx: any) => {
+
+			const _playerId = ctx.match.input.replace('playerReadyToBattle-', '');
+			if (this._session.playerOneId == _playerId) {
+				this._session.playerOneReady = true;
+				ctx.reply('Yeeeah! Waiting for opponent⏰');
+				// this.bot.telegram.sendMessage(_playerId, 'Yeeeah! Waiting for opponent⏰');
+			} else {
+				this._session.playerTwoReady = true;
+				ctx.reply('Yeeeah! Waiting for opponent⏰');
+				// this.bot.telegram.sendMessage(_playerId, 'Yeeeah! Waiting for opponent⏰');
+			}
+
+			if (this._session.playerOneReady && this._session.playerTwoReady) {
+				const random: string = Math.random() < 0.5 ? '0' : '1';
+				if (random == '0') {
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`You have 10 minutes to send round🎤`,
+					);
+				} else {
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`${this._session.playerTwo.firstName} ${this._session.playerTwo.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`You have 10 minutes to send round🎤`,
+					);
+				}
+			}
+
+			console.log('ready', this._session.playerOneReady, this._session.playerTwoReady);
+			// ctx.reply('rabotAe', _playerId);
+			console.log('2id', this._session.playerOneId, this._session.playerTwoId);
+		});
+
+		this.scene.hears('/mainmenu', async (ctx: any) => {
+			await this.battleService.updateStatus(ctx.scene.session.battleId, 'planned');
+			ctx.scene.leave();
+			ctx.reply(`Battle cancelled!`);
+			ctx.reply(`Main menu. Enter /start command.`);
+		});
+
+		// this.bot.on('video_note', (ctx: any) => {
+		// 	console.log('on', ctx.message);
+		// 	ctx.reply(`context ${ctx.message}`);
+		// });
 	}
 }
 export class EventTheBattleCommand extends TGCommand {

@@ -11,9 +11,11 @@ export interface IUser {
 }
 
 export interface IBattle {
-	id: string;
-	name: string;
+	battleId: string;
+	name?: string | null;
 	status: BattleStatus;
+	playerOne: string;
+	playerTwo: string;
 	winner: string | null;
 }
 

@@ -11,14 +11,18 @@ import {
 	SetAdminCommand,
 	SetBattlerCommand,
 	TGCommand,
-	EventTheBattleScene,
-	EventTheBattleCommand,
+	CreateBattleEventScene,
+	CreateBattleEventCommand,
 	BackButtonCommand,
 	SetAdminScene,
-	SetBattlerScene, AnyMessage,
+	SetBattlerScene,
+	AnyMessage,
+	EventTheBattleScene,
+	EventTheBattleCommand,
 } from './commands';
 import { UserService } from './services';
-import { ChannelService } from './services/channel.service';
+
+// import { ChannelService } from './services/channel.service';
 class Bot {
 	bot: any;
 	stage: Stage<any>;
@@ -29,6 +33,7 @@ class Bot {
 		this.bot = new Telegraf<IBotContext>(this.configService.get('TOKEN'));
 
 		this.scenes = [
+			new CreateBattleEventScene(this.bot),
 			new EventTheBattleScene(this.bot),
 			new SetAdminScene(this.bot),
 			new SetBattlerScene(this.bot),
@@ -42,6 +47,7 @@ class Bot {
 			this.scenes[0].scene,
 			this.scenes[1].scene,
 			this.scenes[2].scene,
+			this.scenes[3].scene,
 		]);
 		this.bot.use(session());
 		this.bot.use(this.stage.middleware());
@@ -58,7 +64,7 @@ class Bot {
 
 	async launch(): Promise<void> {
 		const db = await Db.getDb();
-		this.channelService = new ChannelService(db);
+		// this.channelService = new ChannelService(db);
 
 		// fetch(`https://api.telegram.org/bot${this.configService.get('TOKEN')}/getUpdates`)
 		// 	.then((res: any) => res.json())
@@ -108,6 +114,7 @@ class Bot {
 			new SendAdminPassword(this.bot),
 			new SetBattlerCommand(this.bot),
 			new BackButtonCommand(this.bot),
+			new CreateBattleEventCommand(this.bot),
 			new EventTheBattleCommand(this.bot),
 		];
 

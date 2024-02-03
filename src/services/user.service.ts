@@ -1,11 +1,10 @@
-import { IDb } from '../database';
-import { ModelStatic } from 'sequelize';
-import { UserRole } from '../database/models/user.model';
+import {IDb} from '../database';
+import {User, UserRole} from '../database/models/user.model';
 
 export class UserService {
 	private user: any;
 	constructor(db: IDb) {
-		this.user = db.sequelize.models.user;
+		this.user = User;
 	}
 
 	async create(login: string, username: string, firstName: string, lastName: string): Promise<any> {
@@ -36,7 +35,7 @@ export class UserService {
 			{ role: role },
 			{
 				where: {
-					login: login,
+					login: login.toString(),
 				},
 			},
 		);
@@ -46,17 +45,15 @@ export class UserService {
 	async delete(login: string): Promise<any> {
 		return this.user.destroy({
 			where: {
-				login: login,
+				login: login.toString(),
 			},
 		});
 	}
 
 	async getUsers(): Promise<any> {
-		const users = await this.user.findAll();
-		return users;
+		return await this.user.findAll();
 	}
 	async getById(login: string): Promise<any> {
-		const user = await this.user.findOne({ where: { login: login } });
-		return user;
+		return await this.user.findOne({ where: { login: login.toString() } });
 	}
 }
