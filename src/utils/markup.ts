@@ -20,8 +20,8 @@ export class MainAdminMenu {
 
 export class VideoNoteButton {
 	markup: any;
-	constructor(round: string, username: string, id: string) {
-		this.markup = [{ text: `${round} Round: ${username}`, url: `t.me/${id}` }];
+	constructor(round: string, username: string, url: string) {
+		this.markup = [{ text: `${round} Round: ${username}`, url: url }];
 	}
 }
 

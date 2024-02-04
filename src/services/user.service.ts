@@ -56,4 +56,15 @@ export class UserService {
 	async getById(login: string): Promise<any> {
 		return await this.user.findOne({ where: { login: login.toString() } });
 	}
+
+	async getAdmins(): Promise<any> {
+		const [users] = await Promise.all([
+			this.user.findAll({
+				where: {
+					role: 'admin',
+				},
+			}),
+		]);
+		return users;
+	}
 }

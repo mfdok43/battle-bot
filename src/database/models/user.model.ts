@@ -10,7 +10,7 @@ import {
 // @ts-expect-error
 import { Unique, Attribute, PrimaryKey, Default, NotNull, HasMany } from '@sequelize/core/decorators-legacy';
 import { Battle } from './battle.model';
-import {sql} from "@sequelize/core";
+import { sql } from "@sequelize/core";
 
 export enum UserRole {
 	User = 'user',
@@ -42,10 +42,10 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
 	@NotNull
 	declare role: UserRole;
 
-	@Attribute(DataTypes.BOOLEAN)
-	@Default(false)
-	@NotNull
-	declare readyToBattle: boolean | null;
+	// @Attribute(DataTypes.BOOLEAN)
+	// @Default(false)
+	// @NotNull
+	// declare readyToBattle: boolean | null;
 
 	@Attribute(DataTypes.STRING)
 	declare battles?: string | null;

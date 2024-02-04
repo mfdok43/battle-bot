@@ -1,6 +1,12 @@
 import { TGCommand } from './command.class';
 import { Scenes } from 'telegraf';
-import { BackButton, BattlesMenu, PlannedBattlesMenu, ReadyToBattleButton } from '../utils/markup';
+import {
+	BackButton,
+	BattlesMenu,
+	PlannedBattlesMenu,
+	ReadyToBattleButton,
+	VideoNoteButton,
+} from '../utils/markup';
 import { Battle } from '../database/models';
 import { BattleService, UserService } from '../services';
 import { Db } from '../database';
@@ -12,6 +18,7 @@ export class EventTheBattleScene extends TGCommand {
 	battleService: any;
 	userService: any;
 	_session: any;
+	_ctx: any;
 	constructor(bot: any) {
 		super(bot);
 		this.scene = new Scenes.BaseScene('eventTheBattle');
@@ -26,6 +33,7 @@ export class EventTheBattleScene extends TGCommand {
 
 		this.scene.enter(async (ctx: any) => {
 			const session = ctx.scene.session;
+			this._ctx = ctx;
 			const db = await Db.getDb();
 			this.battleService = new BattleService(db);
 			this.userService = new UserService(db);
@@ -103,52 +111,64 @@ export class EventTheBattleScene extends TGCommand {
 		});
 
 		this.bot.action(/playerReadyToBattle-/, async (ctx: any) => {
-
 			const _playerId = ctx.match.input.replace('playerReadyToBattle-', '');
 			if (this._session.playerOneId == _playerId) {
 				this._session.playerOneReady = true;
-				ctx.reply('Yeeeah! Waiting for opponent⏰');
-				// this.bot.telegram.sendMessage(_playerId, 'Yeeeah! Waiting for opponent⏰');
+				if (this._session.playerTwoReady === false) {
+					ctx.reply('Yeeeah! Waiting for opponent⏰');
+
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`Your opponent is ready! Waiting for you⏰`,
+					);
+				}
 			} else {
 				this._session.playerTwoReady = true;
-				ctx.reply('Yeeeah! Waiting for opponent⏰');
-				// this.bot.telegram.sendMessage(_playerId, 'Yeeeah! Waiting for opponent⏰');
-			}
+				if (this._session.playerOneReady === false) {
+					ctx.reply('Yeeeah! Waiting for opponent⏰');
 
-			if (this._session.playerOneReady && this._session.playerTwoReady) {
-				const random: string = Math.random() < 0.5 ? '0' : '1';
-				if (random == '0') {
 					this.bot.telegram.sendMessage(
 						this._session.playerOneId,
-						`${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
-					);
-					this.bot.telegram.sendMessage(
-						this._session.playerTwoId,
-						`${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
-					);
-					this.bot.telegram.sendMessage(
-						this._session.playerOneId,
-						`You have 10 minutes to send round🎤`,
-					);
-				} else {
-					this.bot.telegram.sendMessage(
-						this._session.playerOneId,
-						`${this._session.playerTwo.firstName} ${this._session.playerTwo.username} starts first.`,
-					);
-					this.bot.telegram.sendMessage(
-						this._session.playerTwoId,
-						`${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
-					);
-					this.bot.telegram.sendMessage(
-						this._session.playerTwoId,
-						`You have 10 minutes to send round🎤`,
+						`Your opponent is ready! Waiting for you⏰`,
 					);
 				}
 			}
 
-			console.log('ready', this._session.playerOneReady, this._session.playerTwoReady);
-			// ctx.reply('rabotAe', _playerId);
-			console.log('2id', this._session.playerOneId, this._session.playerTwoId);
+			if (this._session.playerOneReady && this._session.playerTwoReady) {
+				this._session.roundCounter = 1;
+				const random: string = Math.random() < 0.5 ? '0' : '1';
+				if (random == '0') {
+					this._session.playerTurnsFirst = this._session.playerOneId;
+					this._session.playerTurnsNow = this._session.playerOneId;
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`Round 1️⃣, ${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`Round 1️⃣, ${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`Battle is started🎬 You have 10 minutes to send round🎤`,
+					);
+				} else {
+					this._session.playerTurnsFirst = this._session.playerTwoId;
+					this._session.playerTurnsNow = this._session.playerTwoId;
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`Round 1️⃣, ${this._session.playerTwo.firstName} ${this._session.playerTwo.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`Round 1️⃣, ${this._session.playerOne.firstName} ${this._session.playerOne.username} starts first.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`Battle is started. You have 10 minutes to send round🎤`,
+					);
+				}
+			}
 		});
 
 		this.scene.hears('/mainmenu', async (ctx: any) => {
@@ -158,10 +178,125 @@ export class EventTheBattleScene extends TGCommand {
 			ctx.reply(`Main menu. Enter /start command.`);
 		});
 
-		// this.bot.on('video_note', (ctx: any) => {
-		// 	console.log('on', ctx.message);
-		// 	ctx.reply(`context ${ctx.message}`);
-		// });
+		this.bot.on('video_note', async (ctx: any) => {
+			const rounds: string[] = ['1️⃣', '2️⃣', '3️⃣'];
+
+			const _playerReplyText = (player: any, rounds: []): string => {
+				let _str: string = `Player ${player.firstName} ${player.username} rounds: `;
+				rounds.forEach((round: any) => (_str += round));
+				return _str;
+			};
+
+			if (ctx.from.id == this._session.playerTurnsNow) {
+				const _currentPlayer = await this.userService.getById(this._session.playerTurnsNow);
+				const _currentPlayerName = `${_currentPlayer.firstName} ${_currentPlayer.username}`;
+				const _currentPlayerUrl =
+					_currentPlayer.instagram != null
+						? _currentPlayer.instagram
+						: 'https://www.instagram.com/kolobattle/';
+
+				if (this._session.playerTurnsNow == this._session.playerOneId) {
+					this._session.playerOneRounds[this._session.roundCounter - 1] = `✔️`;
+					this._session.playerTurnsNow = this._session.playerTwoId;
+
+					if (this._session.roundCounter != 4) {
+						this.bot.telegram.sendMessage(this._session.playerTwoId, `Your turn! Send this shit🚀`);
+					}
+				} else {
+					this._session.playerTwoRounds[this._session.roundCounter - 1] = `✔️`;
+					this._session.playerTurnsNow = this._session.playerOneId;
+
+					if (this._session.roundCounter != 4) {
+						this.bot.telegram.sendMessage(this._session.playerOneId, `Your turn! Send this shit🚀`);
+					}
+				}
+
+				this.bot.telegram.sendMessage(
+					this._session.playerOneId,
+					_playerReplyText(this._session.playerOne, this._session.playerOneRounds) +
+						'\n' +
+						_playerReplyText(this._session.playerTwo, this._session.playerTwoRounds),
+				);
+				this.bot.telegram.sendMessage(
+					this._session.playerTwoId,
+					_playerReplyText(this._session.playerOne, this._session.playerOneRounds) +
+						'\n' +
+						_playerReplyText(this._session.playerTwo, this._session.playerTwoRounds),
+				);
+
+				this.bot.telegram.sendVideoNote('-1001983838390', ctx.message.video_note.file_id, {
+					reply_markup: {
+						inline_keyboard: [
+							await new VideoNoteButton(
+								rounds[this._session.roundCounter - 1],
+								_currentPlayerName,
+								_currentPlayerUrl,
+							).markup,
+						],
+					},
+				});
+
+				if (
+					this._session.playerOneRounds[this._session.roundCounter - 1] == `✔️` &&
+					this._session.playerTwoRounds[this._session.roundCounter - 1] == `✔️`
+				) {
+					this._session.roundCounter++;
+				}
+
+				if (this._session.roundCounter == 4) {
+					this.scene.leave();
+
+					const _admins = await this.userService.getAdmins();
+					_admins.forEach((admin: any) => {
+						this.bot.telegram.sendMessage(
+							admin.login,
+							`Battle completed! You can save results in admin panel🫵😎 \nMain menu. Enter /start command.`,
+						);
+					});
+
+					this.bot.telegram.sendMessage(
+						this._session.playerOneId,
+						`Battle completed! Wait for results🫵😎 \nMain menu. Enter /start command.`,
+					);
+					this.bot.telegram.sendMessage(
+						this._session.playerTwoId,
+						`Battle completed! Wait for results🫵😎 \nMain menu. Enter /start command.`,
+					);
+				} else {
+					if (this._session.playerTurnsNow == this._session.playerTwoId) {
+						this.bot.telegram.sendMessage(
+							this._session.playerOneId,
+							`Wait for another player's turn⏰`,
+						);
+					} else {
+						this.bot.telegram.sendMessage(
+							this._session.playerTwoId,
+							`Wait for another player's turn⏰`,
+						);
+					}
+				}
+				console.log(
+					'video_note',
+					ctx.from.id,
+					this._session.playerTurnsNow,
+					this._session.playerOneRounds,
+					this._session.playerTwoRounds,
+					'counter',
+					this._session.roundCounter,
+				);
+			} else {
+				ctx.reply(`Another player turns now⏰`);
+				console.log(
+					'video_note',
+					ctx.from.id,
+					this._session.playerTurnsNow,
+					this._session.playerOneRounds,
+					this._session.playerTwoRounds,
+					'counter',
+					this._session.roundCounter,
+				);
+			}
+		});
 	}
 }
 export class EventTheBattleCommand extends TGCommand {

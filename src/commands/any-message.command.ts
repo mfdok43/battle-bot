@@ -26,7 +26,6 @@ export class AnyMessage extends TGCommand {
 			this.bot.on('video_note', async (ctx: any) => {
 				console.log('user id ' + ctx.from.first_name);
 				// this.markup = await new VideoNoteButton('3️⃣', ctx.from.first_name, ctx.from.first_name)
-				// 	.markup;
 				this.markup = [{ text: `Суддівський голос: АрХангел`, url: `https://www.instagram.com/kolobattle/` }];
 				//demo channel
 				// this.bot.telegram.sendVideoNote('-1001983838390', ctx.message.video_note.file_id, {
