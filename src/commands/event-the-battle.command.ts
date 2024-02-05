@@ -8,7 +8,7 @@ import {
 	VideoNoteButton,
 } from '../utils/markup';
 import { Battle } from '../database/models';
-import { BattleService, UserService } from '../services';
+import { BattleService, LinkService, UserService } from '../services';
 import { Db } from '../database';
 
 export class EventTheBattleScene extends TGCommand {
@@ -17,6 +17,7 @@ export class EventTheBattleScene extends TGCommand {
 	plannedBattlesMarkup: any;
 	battleService: any;
 	userService: any;
+	linkService: any;
 	_session: any;
 	_ctx: any;
 	constructor(bot: any) {
@@ -37,6 +38,7 @@ export class EventTheBattleScene extends TGCommand {
 			const db = await Db.getDb();
 			this.battleService = new BattleService(db);
 			this.userService = new UserService(db);
+			this.linkService = new LinkService(db);
 			const plannedBattles = await this.battleService.getPlannedBattles();
 			this.plannedBattlesMarkup = new PlannedBattlesMenu(plannedBattles).markup;
 			this.backButton = await new BackButton().markup;
@@ -81,7 +83,7 @@ export class EventTheBattleScene extends TGCommand {
 				});
 				return _str;
 			};
-			console.log('plannedBattle', session.playerOneId, session.playerTwoId);
+			//console.log('plannedBattle', session.playerOneId, session.playerTwoId);
 
 			this.bot.telegram.sendMessage(
 				session.playerOneId,
@@ -188,12 +190,20 @@ export class EventTheBattleScene extends TGCommand {
 			};
 
 			if (ctx.from.id == this._session.playerTurnsNow) {
+				console.log('>>>>>>context from', ctx);
+				console.log('>>>>>>context from', ctx.from);
+				console.log('>>>>>>context chat', ctx.chat);
+				console.log('>>>>>>context video note', ctx.video_note);
+				console.log('>>>>>>context agent', ctx.agent);
+				console.log('>>>>>>context forward origin', ctx.message.forward_origin);
+				console.log('>>>>>>context forward from chat', ctx.message.forward_from_chat);
+
 				const _currentPlayer = await this.userService.getById(this._session.playerTurnsNow);
 				const _currentPlayerName = `${_currentPlayer.firstName} ${_currentPlayer.username}`;
+				const _defaultLink = await this.linkService.getById();
+
 				const _currentPlayerUrl =
-					_currentPlayer.instagram != null
-						? _currentPlayer.instagram
-						: 'https://www.instagram.com/kolobattle/';
+					_currentPlayer.instagram != null ? _currentPlayer.instagram : _defaultLink.link;
 
 				if (this._session.playerTurnsNow == this._session.playerOneId) {
 					this._session.playerOneRounds[this._session.roundCounter - 1] = `✔️`;

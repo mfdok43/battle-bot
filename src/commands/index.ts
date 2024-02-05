@@ -10,3 +10,4 @@ export { SetAdminScene } from './set-admin.command';
 export { SetBattlerScene } from './set-battler.command';
 export { AnyMessage } from './any-message.command';
 export { EventTheBattleScene, EventTheBattleCommand } from './event-the-battle.command';
+export { EditDefaultLinkScene, EditDefaultLinkCommand } from './edit-default-link.command';

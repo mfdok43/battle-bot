@@ -14,6 +14,7 @@ export class MainAdminMenu {
 				{ text: 'Create battle event', callback_data: 'createBattleEvent' },
 				{ text: 'Send Video note', callback_data: 'sendVideoNote' },
 			],
+			[{ text: `Edit default link`, callback_data: 'editDefaultLink' }],
 		];
 	}
 }
@@ -29,6 +30,13 @@ export class CreateBattleButton {
 	markup: any;
 	constructor() {
 		this.markup = [{ text: 'Create battle', callback_data: 'createBattle' }];
+	}
+}
+
+export class UpdateLinkButton {
+	markup: any;
+	constructor() {
+		this.markup = [{ text: 'Update link', callback_data: 'updateLink' }];
 	}
 }
 

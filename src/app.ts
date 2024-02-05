@@ -18,7 +18,7 @@ import {
 	SetBattlerScene,
 	AnyMessage,
 	EventTheBattleScene,
-	EventTheBattleCommand,
+	EventTheBattleCommand, EditDefaultLinkScene, EditDefaultLinkCommand,
 } from './commands';
 import { UserService } from './services';
 
@@ -37,6 +37,7 @@ class Bot {
 			new EventTheBattleScene(this.bot),
 			new SetAdminScene(this.bot),
 			new SetBattlerScene(this.bot),
+			new EditDefaultLinkScene(this.bot),
 		];
 
 		for (const scene of this.scenes) {
@@ -48,6 +49,7 @@ class Bot {
 			this.scenes[1].scene,
 			this.scenes[2].scene,
 			this.scenes[3].scene,
+			this.scenes[4].scene,
 		]);
 		this.bot.use(session());
 		this.bot.use(this.stage.middleware());
@@ -116,6 +118,7 @@ class Bot {
 			new BackButtonCommand(this.bot),
 			new CreateBattleEventCommand(this.bot),
 			new EventTheBattleCommand(this.bot),
+			new EditDefaultLinkCommand(this.bot),
 		];
 
 		for (const command of this.commands) {

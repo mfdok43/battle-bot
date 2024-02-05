@@ -1,11 +1,12 @@
 import { BattlesMenu, MainAdminMenu } from '../utils/markup';
 import { TGCommand } from './command.class';
-import { UserService, BattleService } from '../services';
+import { UserService, BattleService, LinkService } from '../services';
 import { IDb } from '../database';
 
 export class StartCommand extends TGCommand {
 	private userService;
 	private battleService;
+	private linkService;
 	menuButtons: any;
 	battleButtons: any;
 
@@ -13,6 +14,7 @@ export class StartCommand extends TGCommand {
 		super(bot);
 		this.userService = new UserService(db);
 		this.battleService = new BattleService(db);
+		this.linkService = new LinkService(db);
 		this.menuButtons = new MainAdminMenu().markup;
 	}
 
@@ -73,6 +75,8 @@ export class StartCommand extends TGCommand {
 								);
 							}
 						} else {
+							// const _koloLink = this.linkService.create('https://www.instagram.com/kolobattle/');
+
 							ctx.reply(
 								`Hello, ${ctx.from.first_name} ${ctx.from.username}! You can make business🙂`,
 								{

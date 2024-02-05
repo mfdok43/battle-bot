@@ -1,6 +1,7 @@
 import { Sequelize, Dialect } from '@sequelize/core';
 import { IConfigService, ConfigService } from '../config';
 import { User, Battle } from './models';
+import {Link} from "./models/link.model";
 
 export class Db {
 	sequelize: Sequelize;
@@ -28,7 +29,7 @@ export class Db {
 				port,
 				dialect,
 				logging,
-				models: [User, Battle],
+				models: [User, Battle, Link],
 			});
 			await sequelize.sync({ alter: true });
 			this.instance = new Db(sequelize);
